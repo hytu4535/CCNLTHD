@@ -1,0 +1,76 @@
+name: stripe-webhooks-dotnet
+
+services:
+  db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: stripe_webhooks_dotnet
+    ports:
+      - "55432:5432"
+    volumes:
+      - stripewebhooks_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d stripe_webhooks_dotnet"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  seq:
+    image: datalust/seq:latest
+    restart: unless-stopped
+    environment:
+      ACCEPT_EULA: "Y"
+    ports:
+      - "5341:80"
+    volumes:
+      - stripewebhooks_seq_data:/data
+    mem_limit: 1g
+    mem_reservation: 512m
+    cpus: "1"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env.runtime
+    ports:
+      - "7020:7020"
+    depends_on:
+      db:
+        condition: service_healthy
+      seq:
+        condition: service_started
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:7020/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 20s
+    mem_reservation: 256m
+    cpus: "1"
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    profiles: ["tools"]
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+    ports:
+      - "5050:80"
+    volumes:
+      - stripewebhooks_pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  stripewebhooks_postgres_data:
+  stripewebhooks_seq_data:
+  stripewebhooks_pgadmin_data:

@@ -52,3 +52,22 @@ CodeCoverage/
 *.VisualState.xml
 TestResult.xml
 nunit-*.xml
+
+# Local runtime env files (DO NOT COMMIT)
+.env.runtime
+.env.dev
+.env
+*.env
+
+# Local appsettings overrides (DO NOT COMMIT if they contain real secrets)
+appsettings.*.local.json
+**/appsettings.*.local.json
+**/appsettings.Development.local.json
+
+# User secrets / local settings
+secrets.json
+**/secrets.json
+
+# Optional: if you choose NOT to commit appsettings.Development.json
+# (Only do this if you move to appsettings.Development.example.json)
+# **/appsettings.Development.json

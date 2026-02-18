@@ -1,0 +1,544 @@
+{
+  "info": {
+    "name": "stripe-webhooks-dotnet",
+    "_postman_id": "53cf9a5d-7693-491e-9908-678154b4d3c4",
+    "description": "Minimal .NET 8 Stripe webhooks demo.\n\nIncludes health checks, demo endpoints for PaymentIntents + refunds, and a safe webhook probe request.\n\nNotes:\n- The real webhook endpoint (/webhooks/stripe) requires a valid Stripe-Signature header. Use Stripe CLI (stripe listen) for real webhook traffic.\n- These requests include tests + variables for quick verification.\n",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:7020"
+    },
+    {
+      "key": "paymentIntentId",
+      "value": ""
+    },
+    {
+      "key": "refundId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Health",
+      "description": "Basic sanity checks to confirm the API is reachable.",
+      "item": [
+        {
+          "name": "Root (GET /)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Has JSON body', function () { pm.response.to.be.json; });",
+                  "const b = pm.response.json();",
+                  "pm.test('Contains name and status', function () {",
+                  "  pm.expect(b).to.have.property('name');",
+                  "  pm.expect(b).to.have.property('status');",
+                  "});",
+                  "pm.test('Correlation header returned', function () {",
+                  "  pm.expect(pm.response.headers.has('X-Correlation-Id')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Health (GET /health)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Correlation header returned', function () {",
+                  "  pm.expect(pm.response.headers.has('X-Correlation-Id')).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "10 - Demo: PaymentIntents",
+      "description": "Create and confirm PaymentIntents using server-side Stripe API calls. Requires STRIPE_SECRET_KEY configured in the API container.\n\nRun in order: Create -> Confirm -> List Events.\n",
+      "item": [
+        {
+          "name": "Create PaymentIntent (POST /demo/payment-intents)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 199,\n  \"currency\": \"nzd\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/demo/payment-intents",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "payment-intents"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('idempotencyKey', 'pm-create-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Has JSON body', function () { pm.response.to.be.json; });",
+                  "const b = pm.response.json();",
+                  "pm.test('Contains id, status, clientSecret', function () {",
+                  "  pm.expect(b).to.have.property('id');",
+                  "  pm.expect(b).to.have.property('status');",
+                  "  pm.expect(b).to.have.property('clientSecret');",
+                  "});",
+                  "pm.environment.set('paymentIntentId', b.id);",
+                  "pm.test('Stored paymentIntentId into env', function () {",
+                  "  pm.expect(pm.environment.get('paymentIntentId')).to.eql(b.id);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Confirm PaymentIntent (POST /demo/payment-intents/{{paymentIntentId}}/confirm)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"paymentMethod\": \"pm_card_visa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/demo/payment-intents/{{paymentIntentId}}/confirm",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "payment-intents",
+                "{{paymentIntentId}}",
+                "confirm"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('idempotencyKey', 'pm-confirm-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.test('paymentIntentId is set', function () {",
+                  "  pm.expect(pm.environment.get('paymentIntentId')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Has JSON body', function () { pm.response.to.be.json; });",
+                  "const b = pm.response.json();",
+                  "pm.test('Contains id and status', function () {",
+                  "  pm.expect(b).to.have.property('id');",
+                  "  pm.expect(b).to.have.property('status');",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "20 - Demo: Refunds",
+      "description": "Refund a PaymentIntent (full or partial). This triggers refund-related webhook events.\n\nUse Stripe CLI forwarder to observe real webhook deliveries.\n",
+      "item": [
+        {
+          "name": "Refund (Full) (POST /demo/payment-intents/{{paymentIntentId}}/refund)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/demo/payment-intents/{{paymentIntentId}}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "payment-intents",
+                "{{paymentIntentId}}",
+                "refund"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('idempotencyKey', 'pm-refund-full-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.test('paymentIntentId is set', function () {",
+                  "  pm.expect(pm.environment.get('paymentIntentId')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Has JSON body', function () { pm.response.to.be.json; });",
+                  "const b = pm.response.json();",
+                  "pm.test('Contains refund id and status', function () {",
+                  "  pm.expect(b).to.have.property('id');",
+                  "  pm.expect(b).to.have.property('status');",
+                  "});",
+                  "pm.environment.set('refundId', b.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Refund (Partial) (POST /demo/payment-intents/{{paymentIntentId}}/refund)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Idempotency-Key",
+                "value": "{{idempotencyKey}}",
+                "type": "text"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 100,\n  \"reason\": \"requested_by_customer\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/demo/payment-intents/{{paymentIntentId}}/refund",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "payment-intents",
+                "{{paymentIntentId}}",
+                "refund"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.environment.set('idempotencyKey', 'pm-refund-partial-' + pm.variables.replaceIn('{{$guid}}'));",
+                  "pm.test('paymentIntentId is set', function () {",
+                  "  pm.expect(pm.environment.get('paymentIntentId')).to.not.be.empty;",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Has JSON body', function () { pm.response.to.be.json; });",
+                  "const b = pm.response.json();",
+                  "pm.test('Contains refund id and status', function () {",
+                  "  pm.expect(b).to.have.property('id');",
+                  "  pm.expect(b).to.have.property('status');",
+                  "});",
+                  "pm.environment.set('refundId', b.id);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "30 - Events",
+      "description": "Query persisted payment_events rows for quick demo visibility.",
+      "item": [
+        {
+          "name": "List Payment Events (GET /demo/payment-events?take=20)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/demo/payment-events?take=20",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "demo",
+                "payment-events"
+              ],
+              "query": [
+                {
+                  "key": "take",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Body is JSON array', function () {",
+                  "  pm.response.to.be.json;",
+                  "  const b = pm.response.json();",
+                  "  pm.expect(Array.isArray(b)).to.be.true;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "40 - Webhook (Probe)",
+      "description": "Webhook endpoint requires Stripe-Signature. This probe intentionally calls it without a signature and expects 400.\n\nUse Stripe CLI for real webhook testing:\n  stripe listen --forward-to http://localhost:7020/webhooks/stripe\n  stripe trigger payment_intent.succeeded\n",
+      "item": [
+        {
+          "name": "Probe Webhook Without Signature (expects 400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Correlation-Id",
+                "value": "{{correlationId}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"type\":\"payment_intent.succeeded\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/webhooks/stripe",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "webhooks",
+                "stripe"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.environment.set('correlationId', 'pm-' + pm.variables.replaceIn('{{$guid}}'));"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 (missing Stripe-Signature)', function () {",
+                  "  pm.response.to.have.status(400);",
+                  "});",
+                  "pm.test('Has JSON error', function () { pm.response.to.be.json; });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
