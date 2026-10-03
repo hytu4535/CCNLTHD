@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using StripeWebhooks.Api.Models;
 using StripeWebhooks.Api.Persistence.Entities;
 
 namespace StripeWebhooks.Api.Persistence;
@@ -9,6 +10,7 @@ public sealed class AppDbContext : DbContext
 
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
     public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
+    public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -41,6 +43,27 @@ public sealed class AppDbContext : DbContext
             b.Property(x => x.OccurredAt).HasColumnName("occurred_at");
 
             b.HasIndex(x => x.StripeEventId).IsUnique();
+        });
+
+        modelBuilder.Entity<Product>(b =>
+        {
+            b.ToTable("products");
+            b.HasKey(x => x.Id);
+
+            b.Property(x => x.Id).HasColumnName("id");
+            b.Property(x => x.Name).HasColumnName("name").HasMaxLength(100).IsRequired();
+            b.Property(x => x.Price).HasColumnName("price").HasColumnType("numeric(18,2)").IsRequired();
+            b.Property(x => x.StockQuantity).HasColumnName("stock_quantity").HasDefaultValue(0).IsRequired();
+            b.Property(x => x.CreatedAt).HasColumnName("created_at").IsRequired();
+            b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
+
+            // Seed Data (4 sample products)
+            b.HasData(
+                new Product { Id = 1, Name = "Stripe Developer T-Shirt", Price = 29.99m, StockQuantity = 100, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Product { Id = 2, Name = "Stripe Coffee Mug", Price = 14.50m, StockQuantity = 250, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Product { Id = 3, Name = "API Sticker Pack", Price = 5.00m, StockQuantity = 500, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
+                new Product { Id = 4, Name = "Mechanical Keyboard", Price = 129.99m, StockQuantity = 45, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
+            );
         });
     }
 }
