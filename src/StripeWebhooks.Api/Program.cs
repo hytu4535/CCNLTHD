@@ -120,6 +120,8 @@ builder.Services.AddScoped<StripeSignatureVerifier>();
 builder.Services.AddScoped<StripeWebhookHandler>();
 
 builder.Services.AddCorrelationId();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
@@ -152,6 +154,8 @@ if (!isTesting)
 // Correlation first so request logging can include correlation fields if your middleware
 // enriches LogContext / headers.
 app.UseCorrelationId();
+app.UseSwagger();
+app.UseSwaggerUI();
 
 if (!isTesting)
 {
@@ -173,6 +177,7 @@ if (!isTesting)
 app.MapHealthEndpoints();
 app.MapStripeWebhookEndpoints();
 app.MapPaymentIntentEndpoints();
+app.MapProductEndpoints();
 
 // --------------------------------------------------------------------
 // Run + shutdown
