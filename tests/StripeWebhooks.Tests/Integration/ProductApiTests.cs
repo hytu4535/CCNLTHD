@@ -28,7 +28,7 @@ public class ProductApiTests : IClassFixture<TestWebApplicationFactory>
         var products = await response.Content.ReadFromJsonAsync<List<Product>>();
         products.Should().NotBeNull();
         products.Should().NotBeEmpty();
-        products.Any(p => p.Name == "Stripe Developer T-Shirt").Should().BeTrue();
+        products?.Any(p => p.Name == "Stripe Developer T-Shirt").Should().BeTrue();
     }
 
     [Fact]
@@ -104,7 +104,7 @@ public class ProductApiTests : IClassFixture<TestWebApplicationFactory>
     public async Task UpdateProduct_ReturnsOk_WhenValid()
     {
         var client = _factory.CreateClient();
-        
+
         // First create a product to update
         var createDto = new CreateProductDto(null, "Product To Update Unique", 19.99m, 5);
         var createRes = await client.PostAsJsonAsync("/api/products", createDto);
@@ -126,7 +126,7 @@ public class ProductApiTests : IClassFixture<TestWebApplicationFactory>
     public async Task UpdateProduct_ReturnsBadRequest_WhenNameAlreadyExistsOnAnotherProduct()
     {
         var client = _factory.CreateClient();
-        
+
         var createDto = new CreateProductDto(null, "Product For Duplicate Test", 19.99m, 5);
         var createRes = await client.PostAsJsonAsync("/api/products", createDto);
         var created = await createRes.Content.ReadFromJsonAsync<Product>();
