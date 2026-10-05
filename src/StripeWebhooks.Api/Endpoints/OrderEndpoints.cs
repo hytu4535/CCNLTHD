@@ -14,7 +14,7 @@ public sealed record CreateOrderRequest
     public int Quantity { get; init; }
 
     [Required, StringLength(128, MinimumLength = 1)]
-    [RegularExpression(@"^pi_[A-Za-z0-9]+$", ErrorMessage = "PaymentIntentId must be a valid Stripe PaymentIntent ID.")]
+    [RegularExpression(@"^pi_[A-Za-z0-9_]+$", ErrorMessage = "PaymentIntentId must be a valid Stripe PaymentIntent ID.")]
     public required string PaymentIntentId { get; init; }
 }
 

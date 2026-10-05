@@ -124,6 +124,9 @@ builder.Services.AddScoped<StripeWebhookHandler>();
 
 builder.Services.AddCorrelationId();
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 var app = builder.Build();
 
 app.UseSwagger();
