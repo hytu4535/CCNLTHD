@@ -102,6 +102,9 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("db");
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // --------------------------------------------------------------------
 // Stripe configuration (prod strict, testing relaxed)
 // --------------------------------------------------------------------
@@ -184,6 +187,7 @@ app.MapHealthEndpoints();
 app.MapStripeWebhookEndpoints();
 app.MapPaymentIntentEndpoints();
 app.MapProductEndpoints();
+app.MapOrderEndpoints();
 
 // --------------------------------------------------------------------
 // Run + shutdown

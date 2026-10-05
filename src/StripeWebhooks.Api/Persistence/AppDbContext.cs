@@ -11,6 +11,7 @@ public sealed class AppDbContext : DbContext
     public DbSet<ProcessedEvent> ProcessedEvents => Set<ProcessedEvent>();
     public DbSet<PaymentEvent> PaymentEvents => Set<PaymentEvent>();
     public DbSet<Product> Products => Set<Product>();
+    public DbSet<Order> Orders => Set<Order>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -64,6 +65,26 @@ public sealed class AppDbContext : DbContext
                 new Product { Id = 3, Name = "API Sticker Pack", Price = 5.00m, StockQuantity = 500, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) },
                 new Product { Id = 4, Name = "Mechanical Keyboard", Price = 129.99m, StockQuantity = 45, CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc) }
             );
+        });
+
+        modelBuilder.Entity<Order>(b =>
+        {
+            b.ToTable("orders");
+            b.HasKey(x => x.Id);
+            b.Property(x => x.ProductId).HasColumnName("product_id");
+            b.Property(x => x.PaymentIntentId).HasColumnName("payment_intent_id").HasMaxLength(128);
+            b.Property(x => x.PaymentStatus)
+                .HasColumnName("payment_status")
+                .HasConversion<string>()
+                .HasMaxLength(32)
+                .HasDefaultValue(OrderPaymentStatus.Pending);
+            b.Property(x => x.Quantity).HasColumnName("quantity");
+            b.Property(x => x.CreatedAt).HasColumnName("created_at");
+            b.HasIndex(x => x.PaymentIntentId).IsUnique();
+            b.HasOne(x => x.Product)
+                .WithMany()
+                .HasForeignKey(x => x.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 }

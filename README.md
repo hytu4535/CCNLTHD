@@ -145,9 +145,27 @@ docker compose up -d --build
 Services:
 
 - API: http://localhost:7020
+- Swagger UI: http://localhost:7020/swagger
 - Health: http://localhost:7020/health
 - Seq: http://localhost:5341
 - Postgres: localhost:55432
+
+### Orders API
+
+Open Swagger at http://localhost:7020/swagger. Create a product first, then create a PaymentIntent and use both returned IDs when creating an order:
+
+```json
+POST /api/products
+{ "name": "Coffee", "price": 4.50 }
+
+POST /demo/payment-intents
+{ "amount": 900, "currency": "nzd" }
+
+POST /api/orders
+{ "productId": 1, "quantity": 2, "paymentIntentId": "pi_..." }
+```
+
+Create the order before confirming that PaymentIntent using `POST /demo/payment-intents/{id}/confirm`; this ensures the webhook can find the order. Orders can be listed, read by ID, updated with `PUT /api/orders/{id}`, and deleted with `DELETE /api/orders/{id}`. The order stores its PaymentIntent ID and starts in `Pending`; signed `payment_intent.succeeded` and `payment_intent.payment_failed` webhooks locate the order by that ID and update its payment status to `Paid` or `Failed`. Invalid product IDs, quantities, or PaymentIntent IDs return a validation/error response.
 
 Optional:
 
