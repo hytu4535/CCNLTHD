@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using StripeWebhooks.Api.Models;
 using StripeWebhooks.Api.Persistence.Entities;
 
 namespace StripeWebhooks.Api.Persistence;
@@ -51,6 +52,11 @@ public sealed class AppDbContext : DbContext
             b.HasKey(x => x.Id);
             b.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
             b.Property(x => x.Price).HasColumnName("price").HasPrecision(12, 2);
+            b.Property(x => x.StockQuantity).HasColumnName("stock_quantity").HasDefaultValue(0);
+            b.Property(x => x.CreatedAt)
+                .HasColumnName("created_at")
+                .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            b.Property(x => x.UpdatedAt).HasColumnName("updated_at");
         });
 
         modelBuilder.Entity<Order>(b =>

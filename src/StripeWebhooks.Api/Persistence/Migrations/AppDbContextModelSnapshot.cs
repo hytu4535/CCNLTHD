@@ -89,7 +89,7 @@ namespace StripeWebhooks.Api.Migrations
                     b.ToTable("processed_events", (string)null);
                 });
 
-            modelBuilder.Entity("StripeWebhooks.Api.Persistence.Entities.Product", b =>
+            modelBuilder.Entity("StripeWebhooks.Api.Models.Product", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -106,6 +106,22 @@ namespace StripeWebhooks.Api.Migrations
                         .HasPrecision(12, 2)
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("price");
+
+                    b.Property<int>("StockQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("stock_quantity");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.HasKey("Id");
                     b.ToTable("products", (string)null);
@@ -151,7 +167,7 @@ namespace StripeWebhooks.Api.Migrations
 
             modelBuilder.Entity("StripeWebhooks.Api.Persistence.Entities.Order", b =>
                 {
-                    b.HasOne("StripeWebhooks.Api.Persistence.Entities.Product", "Product")
+                    b.HasOne("StripeWebhooks.Api.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)

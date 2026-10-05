@@ -1,5 +1,7 @@
 namespace StripeWebhooks.Api.Persistence.Entities;
 
+using StripeWebhooks.Api.Models;
+
 public sealed class Order
 {
     public int Id { get; set; }

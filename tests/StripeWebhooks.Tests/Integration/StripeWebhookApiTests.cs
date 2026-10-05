@@ -4,6 +4,7 @@ using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using StripeWebhooks.Api.Persistence;
 using StripeWebhooks.Api.Persistence.Entities;
+using StripeWebhooks.Api.Models;
 using StripeWebhooks.Tests.Utils;
 using Xunit;
 
