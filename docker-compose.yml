@@ -35,9 +35,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    restart: unless-stopped
     env_file:
-      - .env.runtime
+      - path: .env.runtime
+        required: false
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://0.0.0.0:7020
+      ConnectionStrings__Db: Host=db;Port=5432;Database=stripe_webhooks_dotnet;Username=postgres;Password=postgres
+      Serilog__WriteTo__1__Args__serverUrl: http://seq:80
     ports:
       - "7020:7020"
     depends_on:

@@ -47,6 +47,8 @@ This flow is a demo harness for generating Stripe traffic and observing the webh
 - The API creates a PaymentIntent using Stripe’s API.
 - The API confirms the PaymentIntent server-side (defaults to `pm_card_visa`).
 - Stripe emits webhook events (`payment_intent.*`), forwarded to this repo.
+- The PaymentIntent ID is supplied when creating an order and stored on that order.
+- Success and failure webhooks locate the order by PaymentIntent ID and update its payment status.
 - The repo persists simplified event rows for inspection.
 
 ---
@@ -103,6 +105,10 @@ Stores simplified records extracted from webhook payloads:
 - `OccurredAt`
 
 This is not a full payment ledger — it’s a demo visibility layer.
+
+#### `Orders`
+
+Each order is linked to a product and stores its Stripe `PaymentIntentId` and payment status. Orders start as `Pending`; `payment_intent.succeeded` changes the status to `Paid`, and `payment_intent.payment_failed` changes it to `Failed`.
 
 ---
 

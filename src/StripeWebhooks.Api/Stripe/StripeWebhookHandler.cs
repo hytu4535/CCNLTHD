@@ -158,6 +158,19 @@ public sealed class StripeWebhookHandler
             OccurredAt = ToOccurredAt(stripeEvent)
         });
 
+        var order = await _db.Orders
+            .SingleOrDefaultAsync(item => item.PaymentIntentId == pi.Id, ct);
+        if (order is null)
+        {
+            _log.LogInformation(
+                "No order is linked to PaymentIntent. PaymentIntentId={PaymentIntentId}",
+                pi.Id);
+        }
+        else
+        {
+            order.PaymentStatus = OrderPaymentStatus.Paid;
+        }
+
         await _db.SaveChangesAsync(ct);
     }
 
@@ -182,6 +195,19 @@ public sealed class StripeWebhookHandler
             Currency = pi.Currency,
             OccurredAt = ToOccurredAt(stripeEvent)
         });
+
+        var order = await _db.Orders
+            .SingleOrDefaultAsync(item => item.PaymentIntentId == pi.Id, ct);
+        if (order is null)
+        {
+            _log.LogInformation(
+                "No order is linked to PaymentIntent. PaymentIntentId={PaymentIntentId}",
+                pi.Id);
+        }
+        else
+        {
+            order.PaymentStatus = OrderPaymentStatus.Failed;
+        }
 
         await _db.SaveChangesAsync(ct);
     }

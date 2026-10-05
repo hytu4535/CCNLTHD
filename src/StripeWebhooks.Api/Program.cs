@@ -102,6 +102,9 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 builder.Services.AddHealthChecks()
     .AddDbContextCheck<AppDbContext>("db");
 
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
 // --------------------------------------------------------------------
 // Stripe configuration (prod strict, testing relaxed)
 // --------------------------------------------------------------------
@@ -122,6 +125,9 @@ builder.Services.AddScoped<StripeWebhookHandler>();
 builder.Services.AddCorrelationId();
 
 var app = builder.Build();
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 // --------------------------------------------------------------------
 // Database migrations (skip in tests)
@@ -173,6 +179,8 @@ if (!isTesting)
 app.MapHealthEndpoints();
 app.MapStripeWebhookEndpoints();
 app.MapPaymentIntentEndpoints();
+app.MapProductEndpoints();
+app.MapOrderEndpoints();
 
 // --------------------------------------------------------------------
 // Run + shutdown
