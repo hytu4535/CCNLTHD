@@ -82,13 +82,15 @@ This repo supports two local development modes:
 ### Install Stripe CLI
 
 If you don’t have it installed yet, follow Stripe’s official install guide:
+
 - https://stripe.com/docs/stripe-cli
 
 Sanity check:
-```bash
+
+````bash
 stripe --version
 
-**This webhook endpoint validates real Stripe signatures.**  
+**This webhook endpoint validates real Stripe signatures.**
 If you do **not** run the Stripe CLI listener, your app will appear healthy but you will receive **zero webhook deliveries** — meaning **no rows in `ProcessedEvents` or `PaymentEvents`**.
 
 ### Start the Stripe CLI listener (keep it running)
@@ -96,7 +98,7 @@ If you do **not** run the Stripe CLI listener, your app will appear healthy but 
 ```bash
 stripe login
 stripe listen --forward-to http://localhost:7020/webhooks/stripe
-```
+````
 
 Stripe CLI will print a signing secret like `whsec_...`.
 
@@ -317,8 +319,8 @@ Signature validation is still enforced.
 
 ### No webhook inserts
 
-1. Stripe CLI not running  
-2. Wrong `whsec_...` configured  
+1. Stripe CLI not running
+2. Wrong `whsec_...` configured
 3. Calling webhook endpoint manually without valid signature
 
 ### Docker logging issues
@@ -359,3 +361,5 @@ It is intentionally focused and does not attempt to implement a full payment orc
 ## License
 
 MIT
+
+## Commit
