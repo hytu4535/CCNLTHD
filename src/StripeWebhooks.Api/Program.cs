@@ -170,7 +170,6 @@ if (!isTesting)
 {
     app.UseSerilogRequestLogging(opts =>
     {
-        // Light enrichment without clutter — very useful in Seq.
         opts.EnrichDiagnosticContext = (diag, http) =>
         {
             diag.Set("RequestHost", http.Request.Host.Value);
